@@ -17,9 +17,8 @@ import org.springframework.context.annotation.PropertySource;
 
 import javax.annotation.Resource;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
+import static io.netty.channel.ChannelOption.SO_BACKLOG;
 
 /**
  * @author huangxin
@@ -50,23 +49,12 @@ public class NettyApplication {
 				.channel(NioServerSocketChannel.class)
 				.handler(new LoggingHandler(LogLevel.DEBUG))
 				.childHandler(nettyWebSocketChannelInitializer);
-		Map<ChannelOption<?>, Object> tcpChannelOptions = tcpChannelOptions();
-		Set<ChannelOption<?>> keySet = tcpChannelOptions.keySet();
-		for (ChannelOption option : keySet) {
-			b.option(option, tcpChannelOptions.get(option));
-		}
+        b.option(ChannelOption.SO_KEEPALIVE, keepAlive).option(SO_BACKLOG, backlog);
 		return b;
 	}
 
 	@Resource
 	private NettyWebSocketChannelInitializer nettyWebSocketChannelInitializer;
-
-	private Map<ChannelOption<?>, Object> tcpChannelOptions() {
-		Map<ChannelOption<?>, Object> options = new HashMap<>(4);
-		options.put(ChannelOption.SO_KEEPALIVE, keepAlive);
-		options.put(ChannelOption.SO_BACKLOG, backlog);
-		return options;
-	}
 
 	@Bean(name = "bossGroup", destroyMethod = "shutdownGracefully")
 	public NioEventLoopGroup bossGroup() {
